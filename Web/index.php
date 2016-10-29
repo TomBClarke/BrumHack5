@@ -10,7 +10,7 @@
         $response = "Please play our game - Brainy Bird";
     } else {
         $response = "Number:" . $sender . "|";
-        if (strpos($message, '<Input>') !== false) {
+        if (strpos($message, '<ScoreSubmit>') !== false) {
             try {
                 $xml = new SimpleXMLElement($message);
                 $name = $xml->Name; // If it is a different name to whta is already in the database, update it to this? Does this need to be unique? If so, could reply as to whether it was successfully updated.
