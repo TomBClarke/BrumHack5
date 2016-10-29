@@ -1,5 +1,8 @@
 <?php
 
+$fp = fopen("data.txt", 'w');
+fwrite($fp, "Last request: " . date("Y-m-d h:i:sa"));
+
 if (isset($_REQUEST['From']) && isset($_REQUEST['Body'])) {
     header("content-type: text/xml");
     $sender = $_REQUEST['From'];
@@ -40,3 +43,5 @@ if (isset($_REQUEST['From']) && isset($_REQUEST['Body'])) {
 </html>
 
 <?php } ?>
+
+
