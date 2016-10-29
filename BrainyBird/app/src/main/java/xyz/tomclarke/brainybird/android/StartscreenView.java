@@ -176,6 +176,7 @@ public class StartscreenView extends View{
                     && (event.getX() < REGION_LOG_IN_OUT[2] * getWidth())
                     && (event.getY() > REGION_LOG_IN_OUT[1] * getHeight())
                     && (event.getY() < REGION_LOG_IN_OUT[3] * getHeight()) ) {
+                ((BrainyApplication) mainActivity.getApplication()).connect();
             } else if(    (event.getX() > REGION_PLAY[0] * getWidth())
                     && (event.getX() < REGION_PLAY[2] * getWidth())
                     && (event.getY() > REGION_PLAY[1] * getHeight())

@@ -7,9 +7,15 @@
 
 package xyz.tomclarke.brainybird.android;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 
 public class MainActivity extends FragmentActivity {
     
@@ -32,6 +38,7 @@ public class MainActivity extends FragmentActivity {
         view = new StartscreenView(this);
         setContentView(view);
         setSocket();
+        ensurePermissions();
     }
     
     public void muteToggle() {
@@ -48,7 +55,7 @@ public class MainActivity extends FragmentActivity {
     /**
      * Fills the socket with the medals that have already been collected.
      */
-    private void setSocket(){
+    private void setSocket() {
         SharedPreferences saves = this.getSharedPreferences(medaille_save, 0);
         view.setSocket(saves.getInt(medaille_key, 0));
         view.invalidate();
@@ -61,6 +68,48 @@ public class MainActivity extends FragmentActivity {
     protected void onResume() {
         super.onResume();
         setSocket();
+    }
+    
+    /**
+     * The ACCESS_COARSE_LOCATION permission is required to use the
+     * Bluetooth Low Energy library and must be requested at runtime for Android 6.0+
+     * On an Android 6.0 device, the following code will display 2 dialogs,
+     * one to provide context and the second to request the permission.
+     * On an Android device running an earlier version, nothing is displayed
+     * as the permission is granted from the manifest.
+     *
+     * If the permission is not granted, then Muse 2016 (MU-02) headbands will
+     * not be discovered and a SecurityException will be thrown.
+     */
+    private void ensurePermissions() {
+        
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        {
+            // We don't have the ACCESS_COARSE_LOCATION permission so create the dialogs asking
+            // the user to grant us the permission.
+            
+            DialogInterface.OnClickListener buttonListener =
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which){
+                            dialog.dismiss();
+                            ActivityCompat.requestPermissions(MainActivity.this,
+                                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                                    0);
+                        }
+                    };
+            
+            // This is the context dialog which explains to the user the reason we are requesting
+            // this permission.  When the user presses the positive (I Understand) button, the
+            // standard Android permission dialog will be displayed (as defined in the button
+            // listener above).
+            AlertDialog introDialog = new AlertDialog.Builder(this)
+                    .setTitle(R.string.permission_dialog_title)
+                    .setMessage(R.string.permission_dialog_description)
+                    .setPositiveButton(R.string.permission_dialog_understand, buttonListener)
+                    .create();
+            introDialog.show();
+        }
     }
     
 }

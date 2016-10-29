@@ -4,7 +4,7 @@
     Copyright (c) <2014> <Lars Harmsen - Quchen>
 -->
 <resources>
-    <string name="app_name" translatable="false">Flutter Cow</string>
+    <string name="app_name" translatable="false">BrainyBird</string>
     <string name="current_score">Your score is</string>
     <string name="best_score">Your best score is</string>
     <string name="defaultscore" translatable="false">42</string>
@@ -31,4 +31,24 @@
     <string name="toast_achievement_bronze">Achievement unlocked: Bronze</string>
     <string name="toast_achievement_silver">Achievement unlocked: Silver</string>
     <string name="toast_achievement_gold">Achievement unlocked: Gold</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="connect">Connect</string>
+    <string name="status">Connection Status:</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="refresh">Refresh</string>
+    <string name="init_val">0.0</string>
+    <string name="eeg">EEG data:</string>
+    <string name="accel">Accelerometer Data:</string>
+    <string name="version">Version:</string>
+    <string name="undefined">unknown</string>
+    <string name="artifacts">Blinks, Jaw: </string>
+    <string name="msg_count">Msg number, size: </string>
+    <string name="pause">Pause/Resume</string>
+    <string name="drop">Drop</string>
+    <string name="muse_elem">Alpha relative:</string>
+
+    <string name="permission_dialog_title">Muse Needs Your Permission</string>
+    <string name="permission_dialog_description">Muse needs a few permissions to work properly. On the next screens, tap "Allow" to proceed. If you deny, Muse will not work properly until you go into your Android settings and allow.</string>
+    <string name="permission_dialog_understand">I Understand</string>
 </resources>
