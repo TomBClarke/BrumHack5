@@ -2,7 +2,6 @@ package xyz.tomclarke.brainybird.android;
 
 import android.util.Log;
 
-import com.choosemuse.libmuse.Eeg;
 import com.choosemuse.libmuse.Muse;
 import com.choosemuse.libmuse.MuseArtifactPacket;
 import com.choosemuse.libmuse.MuseDataListener;
@@ -12,13 +11,27 @@ import com.choosemuse.libmuse.MuseDataPacketType;
 public class BrainTap {
     
     private final GameView gameView;
+    private final Brainibration.Calibration calibration;
     private boolean over = false;
     
-    public BrainTap(GameView gameView, Game game) {
+    public BrainTap(GameView gameView, Game game, Brainibration.Calibration calibration) {
         this.gameView = gameView;
+        this.calibration = calibration;
         BrainyApplication app = (BrainyApplication) game.getApplication();
         if (app.getMuse() != null) {
-            app.getMuse().registerDataListener(new DataListener(), MuseDataPacketType.EEG);
+            app.getMuse().registerDataListener(new MuseDataListener() {
+        
+                @Override
+                public void receiveMuseDataPacket(MuseDataPacket museDataPacket, Muse muse) {
+                    BrainTap.this.receiveMuseDataPacket(museDataPacket, muse);
+                }
+        
+                @Override
+                public void receiveMuseArtifactPacket(MuseArtifactPacket museArtifactPacket, Muse muse) {
+            
+                }
+        
+            }, MuseDataPacketType.EEG);
         }
     }
     
@@ -30,12 +43,9 @@ public class BrainTap {
      * @param muse  The headband that sent the information.
      */
     private void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-        
-        // valuesSize returns the number of data values contained in the packet.
-        final long n = p.valuesSize();
         switch (p.packetType()) {
             case EEG:
-                checkValue(p.getEegChannelValue(Eeg.EEG3));
+                checkValue(p.getEegChannelValue(calibration.getEeg()));
                 break;
             case ACCELEROMETER:
             case ALPHA_RELATIVE:
@@ -50,26 +60,13 @@ public class BrainTap {
     private void checkValue(double value) {
         Log.d("Value: ", String.valueOf(value));
         if (over) {
-            if (value < 840) {
+            if (value < calibration.getLow()) {
                 over = false;
             }
-        } else if (value > 850) {
+        } else if (value > calibration.getHigh()) {
             over = true;
             gameView.getPlayer().onTap();
         }
-    }
-    
-    private class DataListener extends MuseDataListener {
-        
-        @Override
-        public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-            BrainTap.this.receiveMuseDataPacket(p, muse);
-        }
-        
-        @Override
-        public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
-        }
-        
     }
     
 }

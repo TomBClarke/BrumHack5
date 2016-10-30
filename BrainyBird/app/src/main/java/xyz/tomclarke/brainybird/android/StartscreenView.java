@@ -10,12 +10,17 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.choosemuse.libmuse.Muse;
 
 import xyz.tomclarke.brainybird.android.R;
 
 public class StartscreenView extends View{
+    
+    public Brainibration.Calibration calibration = Brainibration.Calibration.DEFAULT;
     
     private static Bitmap splash = null;
     private static Bitmap logInOut = null;
@@ -181,11 +186,24 @@ public class StartscreenView extends View{
                     && (event.getX() < REGION_PLAY[2] * getWidth())
                     && (event.getY() > REGION_PLAY[1] * getHeight())
                     && (event.getY() < REGION_PLAY[3] * getHeight()) ) {
-                mainActivity.startActivity(new Intent("xyz.tomclarke.brainybird.android.Game"));
+                Intent intent = new Intent("xyz.tomclarke.brainybird.android.Game");
+                intent.putExtra("calibration", calibration);
+                mainActivity.startActivity(intent);
             } else if(    (event.getX() > REGION_ACHIEVEMENT[0] * getWidth())
                     && (event.getX() < REGION_ACHIEVEMENT[2] * getWidth())
                     && (event.getY() > REGION_ACHIEVEMENT[1] * getHeight())
                     && (event.getY() < REGION_ACHIEVEMENT[3] * getHeight()) ) {
+                Log.d("Click", "Achievement");
+                Muse muse = ((BrainyApplication) mainActivity.getApplication()).getMuse();
+                new Brainibration(mainActivity).calibrate(muse, new Brainibration.CalibrationListener() {
+    
+                    @Override
+                    public void onCalibrationResult(Brainibration.Calibration calibration) {
+                        Log.i("Calibration", calibration.toString());
+                        StartscreenView.this.calibration = calibration;
+                    }
+                    
+                });
             } else if(    (event.getX() > REGION_LEADERBOARD[0] * getWidth())
                     && (event.getX() < REGION_LEADERBOARD[2] * getWidth())
                     && (event.getY() > REGION_LEADERBOARD[1] * getHeight())

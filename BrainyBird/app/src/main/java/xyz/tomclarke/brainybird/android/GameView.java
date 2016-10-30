@@ -59,7 +59,7 @@ public class GameView extends SurfaceView {
     private Tutorial tutorial;
     private boolean tutorialIsShown = true;
 
-    public GameView(Context context) {
+    public GameView(Context context, Brainibration.Calibration calibration) {
         super(context);
         this.game = (Game) context;
         setFocusable(true);
@@ -70,7 +70,7 @@ public class GameView extends SurfaceView {
         frontground = new Frontground(this, game);
         pauseButton = new PauseButton(this, game);
         tutorial = new Tutorial(this, game);
-        new BrainTap(this, game);
+        new BrainTap(this, game, calibration);
     }
     
     private void startTimer() {

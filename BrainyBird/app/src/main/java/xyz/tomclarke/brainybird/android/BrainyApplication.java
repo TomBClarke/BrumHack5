@@ -3,7 +3,9 @@ package xyz.tomclarke.brainybird.android;
 import android.app.Application;
 import android.nfc.Tag;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.choosemuse.libmuse.Accelerometer;
 import com.choosemuse.libmuse.ConnectionState;
@@ -51,7 +53,7 @@ public class BrainyApplication extends Application {
      * Note that ConnectionListener is an inner class at the bottom of this file
      * that extends MuseConnectionListener.
      */
-    private ConnectionListener connectionListener;
+    private MuseConnectionListener connectionListener;
     
     /**
      * The DataListener is how you will receive EEG (and other) data from the
@@ -60,7 +62,7 @@ public class BrainyApplication extends Application {
      * Note that DataListener is an inner class at the bottom of this file
      * that extends MuseDataListener.
      */
-    private DataListener dataListener;
+    private MuseDataListener dataListener;
     
     /**
      * Data comes in from the headband at a very fast rate; 220Hz, 256Hz or 500Hz,
@@ -110,49 +112,83 @@ public class BrainyApplication extends Application {
         Log.i(TAG, "LibMuse version=" + LibmuseVersion.instance().getString());
         
         // Register a listener to receive connection state changes.
-        connectionListener = new ConnectionListener();
+        connectionListener = new MuseConnectionListener() {
+    
+            @Override
+            public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
+                BrainyApplication.this.receiveMuseConnectionPacket(p, muse);
+            }
+            
+        };
         // Register a listener to receive data from a Muse.
-        dataListener = new DataListener();
+        dataListener = new MuseDataListener() {
+            
+            @Override
+            public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
+                BrainyApplication.this.receiveMuseDataPacket(p, muse);
+            }
+    
+            @Override
+            public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
+                BrainyApplication.this.receiveMuseArtifactPacket(p, muse);
+            }
+            
+        };
         
         manager.startListening();
     }
     
     public void connect() {
-        // The user has pressed the "Connect" button to connect to
-        // the headband in the spinner.
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                doConnect();
+            }
+        }).start();
+    }
         
-        // Listening is an expensive operation, so now that we know
-        // which headband the user wants to connect to we can stop
-        // listening for other headbands.
-        manager.stopListening();
-        
-        List<Muse> availableMuses = manager.getMuses();
-        
-        // Check that we actually have something to connect to.
-        if (availableMuses.size() < 1) {
-            Log.w(TAG, "There is nothing to connect to");
-        } else {
-            
-            // Cache the Muse that the user has selected.
-            muse = availableMuses.get(0);
-            // Unregister all prior listeners and register our data listener to
-            // receive the MuseDataPacketTypes we are interested in.  If you do
-            // not register a listener for a particular data type, you will not
-            // receive data packets of that type.
-            muse.unregisterAllListeners();
-            muse.registerConnectionListener(connectionListener);
-            muse.registerDataListener(dataListener, MuseDataPacketType.EEG);
-            muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
-            muse.registerDataListener(dataListener, MuseDataPacketType.ACCELEROMETER);
-            muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
-            muse.registerDataListener(dataListener, MuseDataPacketType.DRL_REF);
-            muse.registerDataListener(dataListener, MuseDataPacketType.QUANTIZATION);
-            
-            // Initiate a connection to the headband and stream the data asynchronously.
-            muse.runAsynchronously();
-        }
+    public void doConnect() {
+        while (muse == null || muse.getConnectionState() != ConnectionState.CONNECTED) {
+            // The user has pressed the "Connect" button to connect to
+            // the headband in the spinner.
     
-        manager.startListening();
+            // Listening is an expensive operation, so now that we know
+            // which headband the user wants to connect to we can stop
+            // listening for other headbands.
+            manager.stopListening();
+    
+            List<Muse> availableMuses = manager.getMuses();
+    
+            // Check that we actually have something to connect to.
+            if (availableMuses.size() < 1) {
+                Log.w(TAG, "There is nothing to connect to");
+            } else {
+        
+                // Cache the Muse that the user has selected.
+                muse = availableMuses.get(0);
+                // Unregister all prior listeners and register our data listener to
+                // receive the MuseDataPacketTypes we are interested in.  If you do
+                // not register a listener for a particular data type, you will not
+                // receive data packets of that type.
+                muse.unregisterAllListeners();
+                muse.registerConnectionListener(connectionListener);
+                muse.registerDataListener(dataListener, MuseDataPacketType.EEG);
+                muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
+                muse.registerDataListener(dataListener, MuseDataPacketType.ACCELEROMETER);
+                muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
+                muse.registerDataListener(dataListener, MuseDataPacketType.DRL_REF);
+                muse.registerDataListener(dataListener, MuseDataPacketType.QUANTIZATION);
+        
+                // Initiate a connection to the headband and stream the data asynchronously.
+                muse.runAsynchronously();
+            }
+            
+            manager.startListening();
+            
+            do {
+                SystemClock.sleep(10_000);
+            } while (muse != null && muse.getConnectionState() == ConnectionState.CONNECTING);
+        }
     }
     
     
@@ -274,35 +310,6 @@ public class BrainyApplication extends Application {
                 }
             });
         }
-    }
-    
-    //--------------------------------------
-    // Listener translators
-    //
-    // Each of these classes extend from the appropriate listener and contain a weak reference
-    // to the activity.  Each class simply forwards the messages it receives back to the Activity.
-    
-    class ConnectionListener extends MuseConnectionListener {
-        
-        @Override
-        public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
-            BrainyApplication.this.receiveMuseConnectionPacket(p, muse);
-        }
-        
-    }
-    
-    class DataListener extends MuseDataListener {
-        
-        @Override
-        public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-            BrainyApplication.this.receiveMuseDataPacket(p, muse);
-        }
-        
-        @Override
-        public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
-            BrainyApplication.this.receiveMuseArtifactPacket(p, muse);
-        }
-        
     }
     
 }
