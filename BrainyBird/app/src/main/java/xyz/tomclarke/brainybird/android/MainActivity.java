@@ -34,6 +34,9 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.SEND_SMS},
+                0);
         super.onCreate(savedInstanceState);
         view = new StartscreenView(this);
         setContentView(view);
@@ -92,9 +95,6 @@ public class MainActivity extends FragmentActivity {
                             dialog.dismiss();
                             ActivityCompat.requestPermissions(MainActivity.this,
                                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                                    0);
-                            ActivityCompat.requestPermissions(MainActivity.this,
-                                    new String[]{Manifest.permission.SEND_SMS},
                                     0);
                         }
                     };
