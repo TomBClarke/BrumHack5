@@ -76,11 +76,8 @@ public class BrainyApplication extends Application {
      * values for EEG and EEG-derived packets.
      */
     private final double[] eegBuffer = new double[6];
-    private boolean eegStale;
     private final double[] alphaBuffer = new double[6];
-    private boolean alphaStale;
     private final double[] accelBuffer = new double[3];
-    private boolean accelStale;
     
     /**
      * To save data to a file, you should use a MuseFileWriter.  The MuseFileWriter knows how to
@@ -95,6 +92,9 @@ public class BrainyApplication extends Application {
      */
     private final AtomicReference<Handler> fileHandler = new AtomicReference<>();
     
+    public Muse getMuse() {
+        return muse;
+    }
     
     //--------------------------------------
     // Lifecycle / Connection code
@@ -197,23 +197,20 @@ public class BrainyApplication extends Application {
             case EEG:
                 assert(eegBuffer.length >= n);
                 getEegChannelValues(eegBuffer,p);
-                eegStale = true;
-                Log.d(TAG, "eegBuffer");
-                Log.d(TAG, Arrays.toString(eegBuffer));
+//                Log.d(TAG, "eegBuffer");
+//                Log.d(TAG, Arrays.toString(eegBuffer));
                 break;
             case ACCELEROMETER:
                 assert(accelBuffer.length >= n);
                 getAccelValues(p);
-                accelStale = true;
-                Log.d(TAG, "accelBuffer");
-                Log.d(TAG, Arrays.toString(accelBuffer));
+//                Log.d(TAG, "accelBuffer");
+//                Log.d(TAG, Arrays.toString(accelBuffer));
                 break;
             case ALPHA_RELATIVE:
                 assert(alphaBuffer.length >= n);
                 getEegChannelValues(alphaBuffer,p);
-                alphaStale = true;
-                Log.d(TAG, "alphaBuffer");
-                Log.d(TAG, Arrays.toString(alphaBuffer));
+//                Log.d(TAG, "alphaBuffer");
+//                Log.d(TAG, Arrays.toString(alphaBuffer));
                 break;
             case BATTERY:
             case DRL_REF:

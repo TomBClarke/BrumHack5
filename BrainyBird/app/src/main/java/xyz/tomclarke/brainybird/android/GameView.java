@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class GameView extends SurfaceView{
+public class GameView extends SurfaceView {
     
     /** Milliseconds for game timer tick */
     public static final long UPDATE_INTERVAL = 50;        // = 20 FPS
@@ -70,6 +70,7 @@ public class GameView extends SurfaceView{
         frontground = new Frontground(this, game);
         pauseButton = new PauseButton(this, game);
         tutorial = new Tutorial(this, game);
+        new BrainTap(this, game);
     }
     
     private void startTimer() {
