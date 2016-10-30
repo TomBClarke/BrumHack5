@@ -68,7 +68,7 @@ function getScore($senderNumber, $queryNumber) {
     $queryString = "'s score is ";
     while($row = mysqli_fetch_array($result)) {
     	if ($row['player_phone'] == $senderNumber) {
-            $senderString = $senderString . $row['player_result'] . ".fd";
+            $senderString = $senderString . $row['player_result'] . ".";
         }
     	if ($row['player_phone'] == $queryNumber) {
             $queryString = $row['player_name'] . $queryString . $row['player_result'] . ".";
