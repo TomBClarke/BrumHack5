@@ -16,11 +16,9 @@ import android.view.View;
 
 import com.choosemuse.libmuse.Muse;
 
-import xyz.tomclarke.brainybird.android.R;
-
 public class StartscreenView extends View{
     
-    public Brainibration.Calibration calibration = Brainibration.Calibration.DEFAULT;
+    public Calibration calibration = Calibration.DEFAULT;
     
     private static Bitmap splash = null;
     private static Bitmap logInOut = null;
@@ -198,7 +196,7 @@ public class StartscreenView extends View{
                 new Brainibration(mainActivity).calibrate(muse, new Brainibration.CalibrationListener() {
     
                     @Override
-                    public void onCalibrationResult(Brainibration.Calibration calibration) {
+                    public void onCalibrationResult(Calibration calibration) {
                         Log.i("Calibration", calibration.toString());
                         StartscreenView.this.calibration = calibration;
                     }

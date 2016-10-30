@@ -56,6 +56,7 @@ public abstract class PlayableCharacter extends Sprite {
      * Let the character flap up.
      */
     public void onTap(){
+        if (isDead()) return;
         this.speedY = getTabSpeed();
         this.y += getPosTabIncrease();
     }

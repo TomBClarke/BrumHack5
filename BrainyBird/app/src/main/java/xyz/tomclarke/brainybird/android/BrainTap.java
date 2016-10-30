@@ -11,14 +11,18 @@ import com.choosemuse.libmuse.MuseDataPacketType;
 public class BrainTap {
     
     private final GameView gameView;
-    private final Brainibration.Calibration calibration;
+    private final Calibration calibration;
     private boolean over = false;
+    private final BrainyApplication app;
     
-    public BrainTap(GameView gameView, Game game, Brainibration.Calibration calibration) {
+    public BrainTap(GameView gameView, Game game, Calibration calibration) {
         this.gameView = gameView;
         this.calibration = calibration;
-        BrainyApplication app = (BrainyApplication) game.getApplication();
+        app = (BrainyApplication) game.getApplication();
         if (app.getMuse() != null) {
+            
+            app.getMuse().unregisterAllListeners();
+            
             app.getMuse().registerDataListener(new MuseDataListener() {
         
                 @Override

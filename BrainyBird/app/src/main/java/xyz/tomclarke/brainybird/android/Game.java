@@ -17,8 +17,6 @@ import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
-import java.io.Serializable;
-
 public class Game extends FragmentActivity {
 
     /**
@@ -95,7 +93,7 @@ public class Game extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         accomplishmentBox = new AccomplishmentBox();
-        Brainibration.Calibration calibration = (Brainibration.Calibration) getIntent().getSerializableExtra("calibration");
+        Calibration calibration = (Calibration) getIntent().getSerializableExtra("calibration");
         view = new GameView(this, calibration);
         gameOverDialog = new GameOverDialog(this);
         handler = new MyHandler(this);

@@ -16,8 +16,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import xyz.tomclarke.brainybird.android.R;
-
 import xyz.tomclarke.brainybird.android.sprites.Background;
 import xyz.tomclarke.brainybird.android.sprites.Coin;
 import xyz.tomclarke.brainybird.android.sprites.Cow;
@@ -59,7 +57,7 @@ public class GameView extends SurfaceView {
     private Tutorial tutorial;
     private boolean tutorialIsShown = true;
 
-    public GameView(Context context, Brainibration.Calibration calibration) {
+    public GameView(Context context, Calibration calibration) {
         super(context);
         this.game = (Game) context;
         setFocusable(true);

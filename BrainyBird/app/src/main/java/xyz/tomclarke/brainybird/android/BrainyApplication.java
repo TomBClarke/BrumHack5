@@ -56,32 +56,6 @@ public class BrainyApplication extends Application {
     private MuseConnectionListener connectionListener;
     
     /**
-     * The DataListener is how you will receive EEG (and other) data from the
-     * headband.
-     *
-     * Note that DataListener is an inner class at the bottom of this file
-     * that extends MuseDataListener.
-     */
-    private MuseDataListener dataListener;
-    
-    /**
-     * Data comes in from the headband at a very fast rate; 220Hz, 256Hz or 500Hz,
-     * depending on the type of headband and the preset configuration.  We buffer the
-     * data that is read until we can update the UI.
-     *
-     * The stale flags indicate whether or not new data has been received and the buffers
-     * hold the values of the last data packet received.  We are displaying the EEG, ALPHA_RELATIVE
-     * and ACCELEROMETER values in this example.
-     *
-     * Note: the array lengths of the buffers are taken from the comments in
-     * MuseDataPacketType, which specify 3 values for accelerometer and 6
-     * values for EEG and EEG-derived packets.
-     */
-    private final double[] eegBuffer = new double[6];
-    private final double[] alphaBuffer = new double[6];
-    private final double[] accelBuffer = new double[3];
-    
-    /**
      * To save data to a file, you should use a MuseFileWriter.  The MuseFileWriter knows how to
      * serialize the data packets received from the headband into a compact binary format.
      * To read the file back, you would use a MuseFileReader.
@@ -93,6 +67,8 @@ public class BrainyApplication extends Application {
      * to a handler on a separate thread.
      */
     private final AtomicReference<Handler> fileHandler = new AtomicReference<>();
+    
+    private boolean connectingLoop = false;
     
     public Muse getMuse() {
         return muse;
@@ -120,25 +96,16 @@ public class BrainyApplication extends Application {
             }
             
         };
-        // Register a listener to receive data from a Muse.
-        dataListener = new MuseDataListener() {
-            
-            @Override
-            public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-                BrainyApplication.this.receiveMuseDataPacket(p, muse);
-            }
-    
-            @Override
-            public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
-                BrainyApplication.this.receiveMuseArtifactPacket(p, muse);
-            }
-            
-        };
         
         manager.startListening();
     }
     
     public void connect() {
+        if (connectingLoop) {
+            return;
+        }
+        connectingLoop = true;
+        
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -172,12 +139,6 @@ public class BrainyApplication extends Application {
                 // receive data packets of that type.
                 muse.unregisterAllListeners();
                 muse.registerConnectionListener(connectionListener);
-                muse.registerDataListener(dataListener, MuseDataPacketType.EEG);
-                muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
-                muse.registerDataListener(dataListener, MuseDataPacketType.ACCELEROMETER);
-                muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
-                muse.registerDataListener(dataListener, MuseDataPacketType.DRL_REF);
-                muse.registerDataListener(dataListener, MuseDataPacketType.QUANTIZATION);
         
                 // Initiate a connection to the headband and stream the data asynchronously.
                 muse.runAsynchronously();
@@ -185,10 +146,14 @@ public class BrainyApplication extends Application {
             
             manager.startListening();
             
+            SystemClock.sleep(5_000);
             do {
-                SystemClock.sleep(10_000);
+                SystemClock.sleep(2_000);
             } while (muse != null && muse.getConnectionState() == ConnectionState.CONNECTING);
+            
+            SystemClock.sleep(10_000);
         }
+        connectingLoop = false;
     }
     
     
@@ -216,79 +181,6 @@ public class BrainyApplication extends Application {
             // We have disconnected from the headband, so set our cached copy to null.
             this.muse = null;
         }
-    }
-    
-    /**
-     * You will receive a callback to this method each time the headband sends a MuseDataPacket
-     * that you have registered.  You can use different listeners for different packet types or
-     * a single listener for all packet types as we have done here.
-     * @param p     The data packet containing the data from the headband (eg. EEG data)
-     * @param muse  The headband that sent the information.
-     */
-    public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-        
-        // valuesSize returns the number of data values contained in the packet.
-        final long n = p.valuesSize();
-        switch (p.packetType()) {
-            case EEG:
-                assert(eegBuffer.length >= n);
-                getEegChannelValues(eegBuffer,p);
-//                Log.d(TAG, "eegBuffer");
-//                Log.d(TAG, Arrays.toString(eegBuffer));
-                break;
-            case ACCELEROMETER:
-                assert(accelBuffer.length >= n);
-                getAccelValues(p);
-//                Log.d(TAG, "accelBuffer");
-//                Log.d(TAG, Arrays.toString(accelBuffer));
-                break;
-            case ALPHA_RELATIVE:
-                assert(alphaBuffer.length >= n);
-                getEegChannelValues(alphaBuffer,p);
-//                Log.d(TAG, "alphaBuffer");
-//                Log.d(TAG, Arrays.toString(alphaBuffer));
-                break;
-            case BATTERY:
-            case DRL_REF:
-            case QUANTIZATION:
-            default:
-                break;
-        }
-    }
-    
-    /**
-     * You will receive a callback to this method each time an artifact packet is generated if you
-     * have registered for the ARTIFACTS data type.  MuseArtifactPackets are generated when
-     * eye blinks are detected, the jaw is clenched and when the headband is put on or removed.
-     * @param p     The artifact packet with the data from the headband.
-     * @param muse  The headband that sent the information.
-     */
-    public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
-    }
-    
-    /**
-     * Helper methods to get different packet values.  These methods simply store the
-     * data in the buffers for later display in the UI.
-     *
-     * getEegChannelValue can be used for any EEG or EEG derived data packet type
-     * such as EEG, ALPHA_ABSOLUTE, ALPHA_RELATIVE or HSI_PRECISION.  See the documentation
-     * of MuseDataPacketType for all of the available values.
-     * Specific packet types like ACCELEROMETER, GYRO, BATTERY and DRL_REF have their own
-     * getValue methods.
-     */
-    private void getEegChannelValues(double[] buffer, MuseDataPacket p) {
-        buffer[0] = p.getEegChannelValue(Eeg.EEG1);
-        buffer[1] = p.getEegChannelValue(Eeg.EEG2);
-        buffer[2] = p.getEegChannelValue(Eeg.EEG3);
-        buffer[3] = p.getEegChannelValue(Eeg.EEG4);
-        buffer[4] = p.getEegChannelValue(Eeg.AUX_LEFT);
-        buffer[5] = p.getEegChannelValue(Eeg.AUX_RIGHT);
-    }
-    
-    private void getAccelValues(MuseDataPacket p) {
-        accelBuffer[0] = p.getAccelerometerValue(Accelerometer.X);
-        accelBuffer[1] = p.getAccelerometerValue(Accelerometer.Y);
-        accelBuffer[2] = p.getAccelerometerValue(Accelerometer.Z);
     }
     
     /**

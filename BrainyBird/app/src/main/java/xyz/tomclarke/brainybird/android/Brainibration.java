@@ -14,10 +14,6 @@ import com.choosemuse.libmuse.MuseDataListener;
 import com.choosemuse.libmuse.MuseDataPacket;
 import com.choosemuse.libmuse.MuseDataPacketType;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.EnumMap;
 
@@ -71,6 +67,8 @@ public class Brainibration extends Dialog {
             blink.put(eeg, new ArrayList<Double>());
             blinkHighs.put(eeg, new ArrayList<Double>());
         }
+    
+        muse.unregisterAllListeners();
         
         muse.registerDataListener(new MuseDataListener() {
     
@@ -101,7 +99,7 @@ public class Brainibration extends Dialog {
                     callback.onCalibrationResult(calculateCalibration());
                 }
             }
-        }, stateOpen ? 3000 : 1000);
+        }, stateOpen ? 2000 : 1000);
     }
     
     private Calibration calculateCalibration() {
@@ -110,29 +108,29 @@ public class Brainibration extends Dialog {
         }
         
         Double greatestDiffAverageOpen = null;
-        Double greatestDiffLowestBlink = null;
+        Double greatestDiffAverageBlink = null;
         Eeg greatestDiffEeg = null;
         for (Eeg eeg : EEGS) {
             double averageOpen = getAverage(openAvgs, eeg);
-            double lowestBlink = getLowest(blinkHighs, eeg);
+            double averageBlink = getAverage(blinkHighs, eeg);
             Log.d("a low", String.valueOf(averageOpen));
-            Log.d("a high", String.valueOf(lowestBlink));
+            Log.d("a high", String.valueOf(averageBlink));
             if (greatestDiffAverageOpen == null ||
-                    lowestBlink - averageOpen >= greatestDiffLowestBlink - greatestDiffAverageOpen) {
+                    averageBlink - averageOpen >= greatestDiffAverageBlink - greatestDiffAverageOpen) {
                 Log.d("rep", eeg.name());
                 greatestDiffAverageOpen = averageOpen;
-                greatestDiffLowestBlink = lowestBlink;
+                greatestDiffAverageBlink = averageBlink;
                 greatestDiffEeg = eeg;
             }
         }
         Log.d("low", String.valueOf(greatestDiffAverageOpen));
-        Log.d("high", String.valueOf(greatestDiffLowestBlink));
+        Log.d("high", String.valueOf(greatestDiffAverageBlink));
         
-        double percentClosen = (greatestDiffLowestBlink - greatestDiffAverageOpen) * 0.2;
+        double percentClosen = (greatestDiffAverageBlink - greatestDiffAverageOpen) * 0.2;
         
         return new Calibration(greatestDiffEeg,
                 greatestDiffAverageOpen + percentClosen,
-                greatestDiffLowestBlink - percentClosen);
+                greatestDiffAverageBlink - percentClosen);
     }
     
     private void flipStateOpen() {
@@ -143,6 +141,7 @@ public class Brainibration extends Dialog {
             double value = stateOpen ? getAverage(enumMap, eeg) : getHighest(enumMap, eeg);
             Log.d("value", String.valueOf(value));
             enumMapStore.get(eeg).add(value);
+            enumMap.get(eeg).clear();
         }
         
         stateOpen = !stateOpen;
@@ -207,6 +206,7 @@ public class Brainibration extends Dialog {
         for (Eeg eeg : EEGS) {
             double value = p.getEegChannelValue(eeg);
             if (Double.isNaN(value)) continue;
+            if (value == 0) continue;
             if (stateOpen) {
                 open.get(eeg).add(value);
             } else {
@@ -218,53 +218,6 @@ public class Brainibration extends Dialog {
     public interface CalibrationListener {
         
         void onCalibrationResult(Calibration calibration);
-        
-    }
-    
-    public static class Calibration implements Serializable {
-        
-        public static final long serialVersionUID = 754338848373432L;
-        public static final Calibration DEFAULT = new Calibration(Eeg.EEG3, 840, 850);
-        
-        private Eeg eeg;
-        private double low;
-        private double high;
-        
-        public Calibration(Eeg eeg, double low, double high) {
-            this.eeg = eeg;
-            this.low = low;
-            this.high = high;
-        }
-        
-        public Eeg getEeg() {
-            return eeg;
-        }
-        
-        public double getLow() {
-            return low;
-        }
-        
-        public double getHigh() {
-            return high;
-        }
-        
-        @Override
-        public String toString() {
-            return "Calibration { eeg = " + eeg + ", low = " + low + ", high = " + high + " }";
-        }
-    
-        private void writeObject(ObjectOutputStream out) throws IOException {
-            out.writeObject(eeg);
-            out.writeDouble(low);
-            out.writeDouble(high);
-        }
-        
-        private void readObject(ObjectInputStream in)
-                throws IOException, ClassNotFoundException {
-            eeg = (Eeg) in.readObject();
-            low = in.readDouble();
-            high = in.readDouble();
-        }
         
     }
     
