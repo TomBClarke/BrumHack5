@@ -86,9 +86,6 @@ public class MainActivity extends FragmentActivity {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
-            // We don't have the ACCESS_COARSE_LOCATION permission so create the dialogs asking
-            // the user to grant us the permission.
-            
             DialogInterface.OnClickListener buttonListener =
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which){
@@ -96,19 +93,20 @@ public class MainActivity extends FragmentActivity {
                             ActivityCompat.requestPermissions(MainActivity.this,
                                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                                     0);
+                            ActivityCompat.requestPermissions(MainActivity.this,
+                                    new String[]{Manifest.permission.SEND_SMS},
+                                    0);
                         }
                     };
-            
-            // This is the context dialog which explains to the user the reason we are requesting
-            // this permission.  When the user presses the positive (I Understand) button, the
-            // standard Android permission dialog will be displayed (as defined in the button
-            // listener above).
+
             AlertDialog introDialog = new AlertDialog.Builder(this)
                     .setTitle(R.string.permission_dialog_title)
                     .setMessage(R.string.permission_dialog_description)
                     .setPositiveButton(R.string.permission_dialog_understand, buttonListener)
                     .create();
             introDialog.show();
+
+
         }
     }
     
