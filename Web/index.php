@@ -1,4 +1,5 @@
 <?php 
+    include("sql.php");
     header("content-type: text/xml"); 
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     $response = "";
@@ -13,18 +14,21 @@
         if (strpos($message, '<ScoreSubmit>') !== false) {
             try {
                 $xml = new SimpleXMLElement($message);
-                $name = $xml->Name; // If it is a different name to whta is already in the database, update it to this? Does this need to be unique? If so, could reply as to whether it was successfully updated.
+                $name = $xml->Name;
                 $score = (int)$xml->Score;
+                
+                $dbResult = submitScore($sender, $name, $score);
                 
                 $response = $response . "Name:" . $name . "|";
                 $response = $response . "Score:" . $score;
+                $response = $response . "|" . $dbResult;
                 
                 // Could maybe attach info about if it is a new high score (from DB update).
             } catch (Exception $e) {
                 $response = $response . "Name:error|Score:error";
             }
         } else {
-            $response = $response . "Query:Should check for '" . $message . "' for their score.";
+            $response = getScore($sender, $message);
         }
     }
 ?>
