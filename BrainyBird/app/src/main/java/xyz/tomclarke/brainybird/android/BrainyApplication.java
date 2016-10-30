@@ -21,6 +21,7 @@ import com.choosemuse.libmuse.MuseDataPacketType;
 import com.choosemuse.libmuse.MuseFileWriter;
 import com.choosemuse.libmuse.MuseManagerAndroid;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,7 +69,8 @@ public class BrainyApplication extends Application {
      */
     private final AtomicReference<Handler> fileHandler = new AtomicReference<>();
     
-    private boolean connectingLoop = false;
+    private ArrayList<ConnectionListener> connectionListeners = new ArrayList<>();
+    private ConnectionState connectionState = ConnectionState.DISCONNECTED;
     
     public Muse getMuse() {
         return muse;
@@ -101,10 +103,10 @@ public class BrainyApplication extends Application {
     }
     
     public void connect() {
-        if (connectingLoop) {
+        if (connectionState != ConnectionState.DISCONNECTED) {
             return;
         }
-        connectingLoop = true;
+        updateConnectionState(ConnectionState.CONNECTING);
         
         new Thread(new Runnable() {
             @Override
@@ -153,7 +155,7 @@ public class BrainyApplication extends Application {
             
             SystemClock.sleep(10_000);
         }
-        connectingLoop = false;
+        updateConnectionState(ConnectionState.CONNECTED);
     }
     
     
@@ -202,6 +204,18 @@ public class BrainyApplication extends Application {
                 }
             });
         }
+    }
+    
+    public void updateConnectionState(ConnectionState connectionState) {
+        this.connectionState = connectionState;
+        for (ConnectionListener connectionListener : connectionListeners) {
+            connectionListener.onConnectionStateChange(connectionState);
+        }
+    }
+    
+    public void subscribeConnectionListener(ConnectionListener connectionListener) {
+        connectionListeners.add(connectionListener);
+        connectionListener.onConnectionStateChange(connectionState);
     }
     
 }

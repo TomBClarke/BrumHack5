@@ -14,9 +14,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.choosemuse.libmuse.ConnectionState;
 import com.choosemuse.libmuse.Muse;
 
-public class StartscreenView extends View{
+public class StartscreenView extends View implements ConnectionListener {
     
     public Calibration calibration = Calibration.DEFAULT;
     
@@ -55,7 +56,6 @@ public class StartscreenView extends View{
     private Rect dstSocket;
     private Rect srcSocket;
     
-    private boolean online;
     private MainActivity mainActivity;
 
     public StartscreenView(MainActivity context) {
@@ -92,7 +92,7 @@ public class StartscreenView extends View{
         }
         
         setWillNotDraw(false);
-        setOnline(false);
+        ((BrainyApplication) context.getApplication()).subscribeConnectionListener(this);
         setSpeaker(true);
         setSocket(0);
     }
@@ -105,13 +105,24 @@ public class StartscreenView extends View{
         }
     }
     
-    public void setOnline(boolean online) {
-        this.online = online;
-        if(online) {
-            srcLogInOut = new Rect(0, logInOut.getHeight()/2, logInOut.getWidth(), logInOut.getHeight());
-        } else {
-            srcLogInOut = new Rect(0, 0, logInOut.getWidth(), logInOut.getHeight()/2);
+    
+    
+    @Override
+    public void onConnectionStateChange(ConnectionState connectionState) {
+        Log.d("state", connectionState.toString());
+        int third = logInOut.getHeight() / 3;
+        switch (connectionState) {
+            case DISCONNECTED:
+                srcLogInOut = new Rect(0, 0, logInOut.getWidth(), third);
+                break;
+            case CONNECTED:
+                srcLogInOut = new Rect(0, third, logInOut.getWidth(), 2 * third);
+                break;
+            case CONNECTING:
+                srcLogInOut = new Rect(0, 2 * third, logInOut.getWidth(), logInOut.getHeight());
+                break;
         }
+        
     }
     
     public void setSocket(int level) {
@@ -126,10 +137,8 @@ public class StartscreenView extends View{
         canvas.drawBitmap(speaker, srcSpeaker, dstSpeaker, null);
         canvas.drawBitmap(info, srcInfo, dstInfo, null);
         canvas.drawBitmap(socket, srcSocket, dstSocket, null);
-        if(online) {
-            canvas.drawBitmap(achievements, srcAchievements, dstAchievements, null);
-            canvas.drawBitmap(leaderboard, srcLeaderboard, dstLeaderboard, null);
-        }
+        canvas.drawBitmap(achievements, srcAchievements, dstAchievements, null);
+        canvas.drawBitmap(leaderboard, srcLeaderboard, dstLeaderboard, null);
     }
     
     @Override
@@ -220,5 +229,5 @@ public class StartscreenView extends View{
         }
         return true;
     }
-
+    
 }
