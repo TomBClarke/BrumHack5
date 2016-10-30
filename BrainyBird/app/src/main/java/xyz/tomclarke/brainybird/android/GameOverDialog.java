@@ -7,17 +7,23 @@
 
 package xyz.tomclarke.brainybird.android;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.telephony.SmsManager;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import xyz.tomclarke.brainybird.android.R;
-
 public class GameOverDialog extends Dialog {
+
+    /** Phone number of the end point */
+    public static final String ENDPOINT_PHONE_NUMBER = "+441212851827";
+
     public static final int REVIVE_PRICE = 5;
     
     /** Name of the SharedPreference that saves the score */
@@ -52,9 +58,31 @@ public class GameOverDialog extends Dialog {
                     game.accomplishmentBox.saveLocal(game);
                     AccomplishmentBox.savesAreOffline(game);
                 }
-                
+
                 dismiss();
-                game.finish();
+
+                final EditText nameInput = new EditText(game);
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case DialogInterface.BUTTON_POSITIVE:
+                                submitScore(nameInput.getText().toString());
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                break;
+                        }
+                        game.finish();
+                    }
+                };
+
+                new AlertDialog.Builder(game)
+                        .setTitle("Submit your score?")
+                        .setMessage("Name:").setView(nameInput)
+                        .setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener)
+                        .show();
             }
         });
 
@@ -129,5 +157,16 @@ public class GameOverDialog extends Dialog {
         editor.putInt(Game.coin_key, game.coins);
         editor.commit();
     }
-    
+
+    /**
+     * Submits the score to the back-end via SMS (sends score and username).
+     *
+     * @param name The name to submit for the leaderboard.
+     */
+    private void submitScore(String name) {
+        String xmlMessage = "<ScoreSubmit><Name>" + name + "</Name><Score>" + game.accomplishmentBox.points + "</Score></ScoreSubmit>";
+
+        SmsManager smsManager = SmsManager.getDefault();
+        smsManager.sendTextMessage(ENDPOINT_PHONE_NUMBER, null, xmlMessage, null, null);
+    }
 }

@@ -17,7 +17,9 @@ public class BrainTap {
     public BrainTap(GameView gameView, Game game) {
         this.gameView = gameView;
         BrainyApplication app = (BrainyApplication) game.getApplication();
-        app.getMuse().registerDataListener(new DataListener(), MuseDataPacketType.EEG);
+        if (app.getMuse() != null) {
+            app.getMuse().registerDataListener(new DataListener(), MuseDataPacketType.EEG);
+        }
     }
     
     /**
